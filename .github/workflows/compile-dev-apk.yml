@@ -32,6 +32,7 @@ jobs:
       - name: Fix flutter_avif JVM target mismatch
         run: |
           AVIF_DIR=$(find $HOME/.pub-cache/hosted/pub.dev -maxdepth 1 -name "flutter_avif_android-*" | head -1)
+          echo "" >> "$AVIF_DIR/android/gradle.properties"
           echo "kotlin.jvm.target.validation.mode=IGNORE" >> "$AVIF_DIR/android/gradle.properties"
           cat >> "$AVIF_DIR/android/build.gradle" << 'EOF'
 
@@ -45,6 +46,7 @@ jobs:
 
       - name: Fix project JVM target
         run: |
+          echo "" >> android/gradle.properties
           echo "kotlin.jvm.target.validation.mode=IGNORE" >> android/gradle.properties
 
       - name: Build Dev APK
