@@ -29,37 +29,13 @@ jobs:
           chmod +x ./build.sh
           ./init.sh
 
-      - name: Fix flutter_avif JVM target mismatch
+      - name: Fix flutter_avif
         run: |
           AVIF_DIR=$(find $HOME/.pub-cache/hosted/pub.dev -maxdepth 1 -name "flutter_avif_android-*" | head -1)
           echo "" >> "$AVIF_DIR/android/gradle.properties"
           echo "kotlin.jvm.target.validation.mode=IGNORE" >> "$AVIF_DIR/android/gradle.properties"
-          cat > "$AVIF_DIR/android/src/main/kotlin/com/teknorota/flutter_avif/FlutterAvifPlugin.kt" << 'EOF'
-          package com.teknorota.flutter_avif
-
-          import io.flutter.embedding.engine.plugins.FlutterPlugin
-          import io.flutter.plugin.common.MethodCall
-          import io.flutter.plugin.common.MethodChannel
-          import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-          import io.flutter.plugin.common.MethodChannel.Result
-
-          class FlutterAvifPlugin : FlutterPlugin, MethodCallHandler {
-              private lateinit var channel: MethodChannel
-
-              override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-                  channel = MethodChannel(binding.binaryMessenger, "flutter_avif")
-                  channel.setMethodCallHandler(this)
-              }
-
-              override fun onMethodCall(call: MethodCall, result: Result) {
-                  result.notImplemented()
-              }
-
-              override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-                  channel.setMethodCallHandler(null)
-              }
-          }
-          EOF
+          KT_FILE="$AVIF_DIR/android/src/main/kotlin/com/teknorota/flutter_avif/FlutterAvifPlugin.kt"
+          printf 'package com.teknorota.flutter_avif\nimport io.flutter.embedding.engine.plugins.FlutterPlugin\nimport io.flutter.plugin.common.MethodCall\nimport io.flutter.plugin.common.MethodChannel\nimport io.flutter.plugin.common.MethodChannel.MethodCallHandler\nimport io.flutter.plugin.common.MethodChannel.Result\nclass FlutterAvifPlugin : FlutterPlugin, MethodCallHandler {\n  private lateinit var channel: MethodChannel\n  override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {\n    channel = MethodChannel(binding.binaryMessenger, "flutter_avif")\n    channel.setMethodCallHandler(this)\n  }\n  override fun onMethodCall(call: MethodCall, result: Result) {\n    result.notImplemented()\n  }\n  override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {\n    channel.setMethodCallHandler(null)\n  }\n}\n' > "$KT_FILE"
 
       - name: Fix project JVM target
         run: |
