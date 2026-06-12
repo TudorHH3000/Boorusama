@@ -34,12 +34,29 @@ jobs:
           AVIF_DIR=$(find $HOME/.pub-cache/hosted/pub.dev -maxdepth 1 -name "flutter_avif_android-*" | head -1)
           echo "" >> "$AVIF_DIR/android/gradle.properties"
           echo "kotlin.jvm.target.validation.mode=IGNORE" >> "$AVIF_DIR/android/gradle.properties"
-          cat >> "$AVIF_DIR/android/build.gradle" << 'EOF'
+          cat > "$AVIF_DIR/android/src/main/kotlin/com/teknorota/flutter_avif/FlutterAvifPlugin.kt" << 'EOF'
+          package com.teknorota.flutter_avif
 
-          android {
-              compileOptions {
-                  sourceCompatibility JavaVersion.VERSION_17
-                  targetCompatibility JavaVersion.VERSION_17
+          import io.flutter.embedding.engine.plugins.FlutterPlugin
+          import io.flutter.plugin.common.MethodCall
+          import io.flutter.plugin.common.MethodChannel
+          import io.flutter.plugin.common.MethodChannel.MethodCallHandler
+          import io.flutter.plugin.common.MethodChannel.Result
+
+          class FlutterAvifPlugin : FlutterPlugin, MethodCallHandler {
+              private lateinit var channel: MethodChannel
+
+              override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+                  channel = MethodChannel(binding.binaryMessenger, "flutter_avif")
+                  channel.setMethodCallHandler(this)
+              }
+
+              override fun onMethodCall(call: MethodCall, result: Result) {
+                  result.notImplemented()
+              }
+
+              override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+                  channel.setMethodCallHandler(null)
               }
           }
           EOF
