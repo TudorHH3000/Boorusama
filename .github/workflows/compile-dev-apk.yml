@@ -29,6 +29,24 @@ jobs:
           chmod +x ./build.sh
           ./init.sh
 
+      - name: Fix flutter_avif JVM target mismatch
+        run: |
+          AVIF_DIR=$(find $HOME/.pub-cache/hosted/pub.dev -maxdepth 1 -name "flutter_avif_android-*" | head -1)
+          echo "kotlin.jvm.target.validation.mode=IGNORE" >> "$AVIF_DIR/android/gradle.properties"
+          cat >> "$AVIF_DIR/android/build.gradle" << 'EOF'
+
+          android {
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+          EOF
+
+      - name: Fix project JVM target
+        run: |
+          echo "kotlin.jvm.target.validation.mode=IGNORE" >> android/gradle.properties
+
       - name: Build Dev APK
         run: ./build.sh apk --flavor dev
 
