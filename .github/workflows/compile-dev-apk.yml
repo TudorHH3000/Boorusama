@@ -1,4 +1,4 @@
-name: Build Dev APK
+name: Build Prod APK
 
 on:
   workflow_dispatch:
@@ -42,11 +42,11 @@ jobs:
           echo "" >> android/gradle.properties
           echo "kotlin.jvm.target.validation.mode=IGNORE" >> android/gradle.properties
 
-      - name: Build Dev APK
-        run: ./build.sh apk --flavor dev
+      - name: Build Prod FOSS APK
+        run: ./build.sh apk --flavor prod --foss
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: boorusama-dev-apk
-          path: build/app/outputs/flutter-apk/*-dev*.apk
+          name: boorusama-prod-foss-apk
+          path: build/app/outputs/flutter-apk/*-prod*.apk
