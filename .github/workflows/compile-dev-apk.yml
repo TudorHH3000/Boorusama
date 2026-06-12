@@ -29,27 +29,46 @@ jobs:
           chmod +x ./build.sh
           ./init.sh
 
+      - name: Fix flutter_avif
+        run: |
+          KT_FILE=$(find $HOME/.pub-cache/hosted/pub.dev -name "FlutterAvifPlugin.kt" | head -1)
+          echo "Patching: $KT_FILE"
+          PROPS_FILE=$(find $HOME/.pub-cache/hosted/pub.dev -path "*/flutter_avif_android-*/android/gradle.properties" | head -1)
+          echo "" >> "$PROPS_FILE"
+          echo "kotlin.jvm.target.validation.mode=IGNORE" >> "$PROPS_FILE"
+          tee "$KT_FILE" << 'KOTLIN'
+package com.teknorota.flutter_avif
+
+import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler
+import io.flutter.plugin.common.MethodChannel.Result
+
+class FlutterAvifPlugin : FlutterPlugin, MethodCallHandler {
+  private lateinit var channel: MethodChannel
+  override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+    channel = MethodChannel(binding.binaryMessenger, "flutter_avif")
+    channel.setMethodCallHandler(this)
+  }
+  override fun onMethodCall(call: MethodCall, result: Result) {
+    result.notImplemented()
+  }
+  override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+    channel.setMethodCallHandler(null)
+  }
+}
+KOTLIN
+          echo "--- Patched file ---"
+          cat "$KT_FILE"
+
       - name: Fix project JVM target
         run: |
           echo "" >> android/gradle.properties
           echo "kotlin.jvm.target.validation.mode=IGNORE" >> android/gradle.properties
 
       - name: Build Prod FOSS APK
-        run: |
-          chmod +x ./build.sh
-          ./build.sh apk --flavor prod --foss &
-          BUILD_PID=$!
-          # Wait for foss_workspace to appear then patch it
-          for i in $(seq 1 60); do
-            KT_FILE=$(find /home/runner/work -name "FlutterAvifPlugin.kt" 2>/dev/null | head -1)
-            if [ -n "$KT_FILE" ]; then
-              echo "Patching: $KT_FILE"
-              printf 'package com.teknorota.flutter_avif\nimport io.flutter.embedding.engine.plugins.FlutterPlugin\nimport io.flutter.plugin.common.MethodCall\nimport io.flutter.plugin.common.MethodChannel\nimport io.flutter.plugin.common.MethodChannel.MethodCallHandler\nimport io.flutter.plugin.common.MethodChannel.Result\nclass FlutterAvifPlugin : FlutterPlugin, MethodCallHandler {\n  private lateinit var channel: MethodChannel\n  override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {\n    channel = MethodChannel(binding.binaryMessenger, "flutter_avif")\n    channel.setMethodCallHandler(this)\n  }\n  override fun onMethodCall(call: MethodCall, result: Result) {\n    result.notImplemented()\n  }\n  override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {\n    channel.setMethodCallHandler(null)\n  }\n}\n' > "$KT_FILE"
-              break
-            fi
-            sleep 2
-          done
-          wait $BUILD_PID
+        run: ./build.sh apk --flavor prod --foss
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
