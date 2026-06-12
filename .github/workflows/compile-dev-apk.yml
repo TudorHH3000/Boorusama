@@ -1,98 +1,40 @@
-name: Compile Dev APK
+name: Build Dev APK
 
 on:
-  workflow_dispatch: # Allows you to manually trigger the build via the Actions button
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          submodules: recursive # Important if any internal monorepo packages are submodules
 
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17' # Forces the correct environment compatibility
+          java-version: '17'
 
-      - name: Set up Flutter Version Manager (FVM)
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable' # Bootstraps a base system flutter to activate dart tools
+          flutter-version: '3.27.0'
+          channel: 'stable'
+          cache: true
 
-      - name: Install and Configure FVM Natively
-        run: |
-          dart pub global activate fvm
-          echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
-          export PATH="$HOME/.pub-cache/bin:$PATH"
-          fvm install
-
-      - name: Initialize Boorusama Environment
-        env:
-          BOORUSAMA_USE_FVM: true
+      - name: Run init.sh
         run: |
           chmod +x ./init.sh
           chmod +x ./build.sh
           ./init.sh
 
-      - name: Fix Stuck Cache File (Redeclaration Patch)
-        run: |
-          mkdir -p /home/runner/.pub-cache/hosted/pub.dev/flutter_avif_android-3.1.0/android/src/main/kotlin/com/teknorota/flutter_avif/
-          cat << 'EOF' > /home/runner/.pub-cache/hosted/pub.dev/flutter_avif_android-3.1.0/android/src/main/kotlin/com/teknorota/flutter_avif/FlutterAvifPlugin.kt
-          package com.teknorota.flutter_avif
-          import io.flutter.embedding.engine.plugins.FlutterPlugin
-          import io.flutter.plugin.common.MethodCall
-          import io.flutter.plugin.common.MethodChannel
-          import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-          import io.flutter.plugin.common.MethodChannel.Result
-          class FlutterAvifPlugin : FlutterPlugin, MethodCallHandler {
-              private lateinit var channel : MethodChannel
-              override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-                  channel = MethodChannel(flutterPluginBinding.binaryMessenger, "flutter_avif")
-                  channel.setMethodCallHandler(this)
-              }
-              override fun onMethodCall(call: MethodCall, result: Result) {
-                  if (call.method == "getPlatformVersion") {
-                      result.success("Android " + android.os.Build.VERSION.RELEASE)
-                  } else {
-                      result.notImplemented()
-                  }
-              }
-              override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-                  channel.setMethodCallHandler(null)
-              }
-          }
-          EOF
+      - name: Build Dev APK
+        run: ./build.sh apk --flavor dev
 
-      - name: Inject Global JVM Mismatch Bypass
-        run: |
-          echo "kotlin.jvm.target.validation.mode = IGNORE" >> android/gradle.properties
-          cat << 'EOF' >> android/build.gradle.kts
-          allprojects {
-              tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-                  compilerOptions {
-                      jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-                  }
-              }
-              tasks.withType<JavaCompile>().configureEach {
-                  sourceCompatibility = JavaVersion.VERSION_17.toString()
-                  targetCompatibility = JavaVersion.VERSION_17.toString()
-              }
-          }
-          EOF
-
-      - name: Compile Dev Flavor APK
-        env:
-          BOORUSAMA_USE_FVM: true
-        run: |
-          ./build.sh apk --flavor dev
-
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: boorusama-dev-apk
-          path: build/app/outputs/flutter-apk/*-dev-*.apk
+          path: build/app/outputs/flutter-apk/*-dev*.apk
