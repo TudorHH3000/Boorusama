@@ -33,7 +33,7 @@ jobs:
         run: |
           KT_FILE=$(find $HOME/.pub-cache/hosted/pub.dev -name "FlutterAvifPlugin.kt" | head -1)
           PROPS_FILE=$(find $HOME/.pub-cache/hosted/pub.dev -path "*/flutter_avif_android-*/android/gradle.properties" | head -1)
-          cp .github/FlutterAvifPlugin.kt "$KT_FILE"
+          cp FlutterAvifPlugin.kt "$KT_FILE"
           echo "" >> "$PROPS_FILE"
           echo "kotlin.jvm.target.validation.mode=IGNORE" >> "$PROPS_FILE"
           cat "$KT_FILE"
