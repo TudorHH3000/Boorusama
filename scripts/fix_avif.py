@@ -31,9 +31,13 @@ search_dirs = [
 
 for search_dir in search_dirs:
     for kt_file in glob.glob(f"{search_dir}/**/FlutterAvifPlugin.kt", recursive=True):
-        print(f"Patching {kt_file}")
+        print(f"BEFORE patch - {kt_file}:")
+        print(open(kt_file).read())
+        print("---")
         with open(kt_file, "w") as f:
             f.write(content)
+        print(f"AFTER patch - {kt_file}:")
         print(open(kt_file).read())
+        print("===")
 
 print("Done")
