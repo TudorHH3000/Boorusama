@@ -1,0 +1,9 @@
+name: flutter_avif_android
+version: 3.1.0
+flutter:
+  plugin:
+    implements: flutter_avif
+    platforms:
+      android:
+        package: com.teknorota.flutter_avif
+        pluginClass: FlutterAvifPlugin
