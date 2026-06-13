@@ -23,8 +23,17 @@ content = (
     "}\n"
 )
 
-for kt_file in glob.glob("/**/FlutterAvifPlugin.kt", recursive=True):
-    print(f"Patching {kt_file}")
-    with open(kt_file, "w") as f:
-        f.write(content)
-    print(open(kt_file).read())
+search_dirs = [
+    os.path.expanduser("~/.pub-cache"),
+    "/home/runner/.pub-cache",
+    "/home/runner/work",
+]
+
+for search_dir in search_dirs:
+    for kt_file in glob.glob(f"{search_dir}/**/FlutterAvifPlugin.kt", recursive=True):
+        print(f"Patching {kt_file}")
+        with open(kt_file, "w") as f:
+            f.write(content)
+        print(open(kt_file).read())
+
+print("Done")
