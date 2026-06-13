@@ -180,7 +180,4 @@ flutter:
 
 dependency_overrides:
   flutter_avif_android:
-    git:
-      url: "https://github.com/khoadng/flutter_avif.git"
-      ref: e144e7e6eb61af6e349be60a6a3afb21b4cdb613
-      path: flutter_avif_android
+    path: packages/flutter_avif_android_stub
