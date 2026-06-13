@@ -34,11 +34,14 @@ jobs:
           echo "" >> android/gradle.properties
           echo "kotlin.jvm.target.validation.mode=IGNORE" >> android/gradle.properties
 
-      - name: Patch flutter_avif_android
-        run: python3 $GITHUB_WORKSPACE/scripts/fix_avif.py
-
       - name: Build Prod FOSS APK
-        run: ./build.sh apk --flavor prod --foss
+        run: |
+          python3 $GITHUB_WORKSPACE/scripts/fix_avif.py
+          ./build.sh apk --flavor prod --foss &
+          BUILD_PID=$!
+          sleep 30
+          python3 $GITHUB_WORKSPACE/scripts/fix_avif.py
+          wait $BUILD_PID
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
