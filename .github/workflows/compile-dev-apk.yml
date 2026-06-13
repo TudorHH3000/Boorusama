@@ -34,6 +34,9 @@ jobs:
           echo "" >> android/gradle.properties
           echo "kotlin.jvm.target.validation.mode=IGNORE" >> android/gradle.properties
 
+      - name: Patch flutter_avif_android
+        run: python3 $GITHUB_WORKSPACE/scripts/fix_avif.py
+
       - name: Build Prod FOSS APK
         run: ./build.sh apk --flavor prod --foss
 
